@@ -11,6 +11,7 @@ class MindMap extends MultiChildRenderObjectWidget {
     Key? key,
     required List<Widget> children,
     this.dotColor = Colors.purple,
+// this.dotColor = Colors.yellow,
     this.lineColor = Colors.black,
     this.padding = const EdgeInsets.only(left: 50, right: 10),
     this.dotRadius = 8,
@@ -33,8 +34,8 @@ class MindMap extends MultiChildRenderObjectWidget {
           dotColor, lineColor, padding, dotRadius, componentWith);
 
   @override
-  void updateRenderObject(
-      BuildContext context, covariant RenderObject renderObject) {
+  void updateRenderObject(BuildContext context,
+      covariant RenderObject renderObject) {
     (renderObject as RenderBranchComponent).dotColor = dotColor;
     renderObject.lineColor = lineColor;
     renderObject.padding = padding;
@@ -53,13 +54,11 @@ class RenderBranchComponent extends RenderBox
     with
         ContainerRenderObjectMixin<RenderBox, BranchComponentParentData>,
         RenderBoxContainerDefaultsMixin<RenderBox, BranchComponentParentData> {
-  RenderBranchComponent(
-    this.dotColor,
-    this.lineColor,
-    this.padding,
-    this.dotRadius,
-    this.componentWith,
-  );
+  RenderBranchComponent(this.dotColor,
+      this.lineColor,
+      this.padding,
+      this.dotRadius,
+      this.componentWith,);
 
   late Color dotColor;
 
@@ -84,24 +83,26 @@ class RenderBranchComponent extends RenderBox
   void performLayout() {
     double height = 0;
     final deflatedConstraints =
-        constraints.deflate(EdgeInsets.only(left: padding.left));
+    constraints.deflate(EdgeInsets.only(left: padding.left));
 
     for (var child = firstChild; child != null; child = childAfter(child)) {
-      // var childContrainsts = deflatedConstraints.copyWith(
-      //   maxWidth: child.size.width
-      // );
       child.layout(deflatedConstraints, parentUsesSize: true);
       (child.parentData as BoxParentData).offset =
           Offset(componentWith + padding.right, height);
       height += child.size.height;
+
       var widthChildItem = child.size.width;
-      // estimateWidth
+
+      var paintBounds = child.paintBounds;
+
+      // Loop thru child nodes and select Max width child node --> set calculatorMaxWidth to Max width child node
       if (widthChildItem > calculatorMaxWidth) {
-        calculatorMaxWidth = widthChildItem;
+        calculatorMaxWidth =
+            widthChildItem; // default calculation ... that was not working
       }
     }
 
-    size = Size(calculatorMaxWidth, height);
+    size = Size(calculatorMaxWidth + 100, height);
   }
 
   @override
@@ -111,7 +112,8 @@ class RenderBranchComponent extends RenderBox
       ..color = lineColor
       ..strokeWidth = 2
       ..style = PaintingStyle.stroke;
-    final Paint dotsPaint = Paint()..color = dotColor;
+    final Paint dotsPaint = Paint()
+      ..color = dotColor;
 
     /// start
     if (childCount == 0) {
@@ -134,7 +136,7 @@ class RenderBranchComponent extends RenderBox
 
     for (var child = firstChild; child != null; child = childAfter(child)) {
       final BranchComponentParentData childParentData =
-          child.parentData! as BranchComponentParentData;
+      child.parentData! as BranchComponentParentData;
       var offset0 = Offset(childParentData.offset.dx + offset.dx,
           childParentData.offset.dy + offset.dy);
       context.paintChild(child, offset0);
@@ -148,16 +150,16 @@ class RenderBranchComponent extends RenderBox
       var side = graphRadius * 2;
 
       if (childNumber == 0) {
-        // first child
+// first child
         start = dotCenter;
         rect1 = Rect.fromLTWH(graphPadding + offset.dx, centerY, side, side);
       } else if (childNumber == childCount - 1) {
-        // last child
+// last child
         end = dotCenter;
         rect2 =
             Rect.fromLTWH(graphPadding + offset.dx, centerY - side, side, side);
       } else {
-        // middle child
+// middle child
         lines
           ..moveTo(graphPadding + offset.dx, centerY)
           ..lineTo(dotCenter.dx, dotCenter.dy);
@@ -178,8 +180,8 @@ class RenderBranchComponent extends RenderBox
     if (start != null && end != null) {
       lines
         ..moveTo(start.dx, start.dy)
-        ..arcTo(rect1, -pi / 2, -pi / 2, false)
-        ..arcTo(rect2, -pi, -pi / 2, false)
+        ..arcTo(rect1, -pi / 2, -pi / 2, false)..arcTo(
+          rect2, -pi, -pi / 2, false)
         ..lineTo(end.dx, end.dy);
     } else {
       if (start != null) {
@@ -188,9 +190,7 @@ class RenderBranchComponent extends RenderBox
           ..lineTo(start.dx, start.dy);
       }
     }
-    context.canvas
-      ..drawPath(lines, linesPaint)
-      ..drawPath(dots, dotsPaint);
+    context.canvas..drawPath(lines, linesPaint)..drawPath(dots, dotsPaint);
   }
 
   @override
